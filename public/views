@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>SETTINGS</title>
+    <link rel="icon" type="image/png" href="/views/PNG/AS.png">
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="altIndex.css">
+    <style type="text/css">
+
+    </style>
+    <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    </head>
+
+    <body>
+        <header>
+        <h1>SETTINGS</h1>
+        <h3 id = "numPlayers">Active Players: 0 </h3>
+        </header>
+    <br>
+
+        <form action="#">
+            <section id="playersettings">
+            <fieldset>
+            <legend>Player Settings</legend>
+                <div id = "Player">
+                    <label for="playernum">Number of Players:</label>
+                    <input id="playernum" type="number" name="playernum" min = "1" max = "4" step = "1" value = "1" title = "Max 4 Players"><br>
+
+                    <label for="hand">Starting Hand:</label>
+                    <input id="hand" type="number" name="hand" min = "0" max = "60" step = "1" value = "0" title = "The Amount Of Cards Each Player Starts With"><br>
+                </div>
+            </fieldset>
+            </section>
+            <br>
+            <section id ="gamesettings">
+            <fieldset>
+            <legend>Game Settings</legend>
+                <div id = "Game">
+                    <label for = "name"> Game Name:</label>
+                    <input id = "name" type = "text" name = "name" maxlength="20" value = "Virtual Cards" title = "Limit 20 Characters">
+                    <input id = "updateButton" type="button" value="Update Name" title= "Update And Refresh Current Game Name">
+                    <br>
+                    <label for = "Joker"> - Jokers </label>
+                    <input type = "checkbox" id = "Joker" title= "Create Deck With 2 Jokers"><br>
+                    <label for = "Infinite"> - Infinite Mode: </label>
+                    <input type = "checkbox" id = "Infinite" title= "All Discards Are Constantly Returned To The Main Deck">
+                    <label for = "ShuffleOn"> Shuffle On Replacement: </label>
+                    <input type = "checkbox" id = "ShuffleOn" disabled title= "Shuffle Discard Pile Into To Main Deck">
+                    <hr>
+                    <fieldset>
+                    <legend title= "Only Accessible During An Active Game">Active Game Controls</legend>
+                        <input id = "DiscardToMain" type="button" disabled value="Discard To Main" title= "Return Discards To Main" onClick="discardToMain()">
+                        <input id = "Shuffle" type="button" disabled value="Shuffle Main" onClick="ShuffleMain()">
+                        <!--<label for = "Auto"> Auto Cards: </label>
+                        <input type = "checkbox" id = "Auto" title= "Players Always Maintain At least the Starting Hand"> -->
+                    </fieldset>
+                </div>
+            </fieldset>
+        </section>
+        <br>
+        <section id="submit">
+            <input type="reset" name="reset" value="Reset">
+            <input id = "GameButton" type="button" value="Create Game" title= "Start New Game - This Will Clear Any Previous Game History" onClick="SetGame()">
+            <label id = "openGame" for = "GameButton" onclick='return false;'> </label>
+            <!--<input id = "end" type="button" value="End Game" title= "End the Current Running Game">-->
+        </section>
+        </form>
+
+        <script>
+            function SetGame(){
+                $.post("/create",{playernum:$("#playernum").val(), handnum:$("#hand").val(), name:$("#name").val(),
+                      infinite:$("#Infinite").prop("checked"),shuffleon:$("#ShuffleOn").prop("checked"),
+                      joker:$("#Joker").prop("checked")},success);
+            }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+            function UpdateGame(){
+                $.post("/update", {name:$("#name").val()},success);
+            }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+            function EndGame(){
+                $.get("/end",success);
+            }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+            function discardToMain(){
+                $.post("/discardtomain",null);
+            }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+            function ShuffleMain(){
+                $.post("/shuffle",null);
+            }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+            function success(data) {
+                switch(data.error) {
+                    // case 0: alert("Game Created!");;break;
+                    case 1: alert("Invalid Starting Hand");break;
+                    case 2: alert("No Current Game");break;
+                    case 3: alert("Name Updated");break;
+                    case 4: alert("Text Inputs Can Only Include Letters And Numbers");break;
+                    // case 5: alert("Game Ended");break;
+                    // case 6: alert("Bad Create: Game In Progress");break;
+                }
+                if($("#GameButton").val() == "Create Game"){
+                    $("#GameButton").val("End Game");
+                    $("#GameButton").attr( 'title',"End The Current Running Game");
+                    $("#GameButton").attr( 'onClick',"EndGame()");
+                }
+                else if($("#GameButton").val() == "End Game"){
+                    $("#GameButton").val("Create Game");
+                    $("#GameButton").attr( 'title',"Start New Game - This Will Clear Any Previous Game History");
+                    $("#GameButton").attr( 'onClick',"SetGame()");
+                }
+            }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+            check();
+            function check() {
+                $.get("/indexCheck",{playernum:parseInt($("#playernum").val()),joker:$("#Joker").prop("checked")}, checkSuccess);
+                let numMilliSeconds = 250;
+                setTimeout(check, numMilliSeconds);
+            }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+            function checkSuccess(data){
+                document.getElementById("numPlayers").innerHTML = "Active Players: " + data.active;
+                if(data.gameactive == true){
+                    $('#playernum').attr("disabled", true);
+                    $('#hand').attr("disabled", true);
+                    $('#Infinite').attr("disabled", true);
+                    $('#ShuffleOn').attr("disabled", true);
+                    $("#Joker").attr("disabled", true);
+
+                    $("#GameButton").val("End Game");
+                    $("#GameButton").attr( 'title',"End The Current Running Game");
+                    $("#GameButton").attr( 'onClick',"EndGame()");
+
+                    if(data.discard.length > 0){
+                      $("#DiscardToMain").removeAttr("disabled");
+                      $("#DiscardToMain").val("Discard To Main");
+                    }
+                    else{
+                      $("#DiscardToMain").attr("disabled", true);
+                      $("#DiscardToMain").val("Discard Empty");
+                    }
+
+                    if($("#Infinite").prop("checked")){
+                      $("#DiscardToMain").attr("disabled", true);
+                      $("#DiscardToMain").val("Discard To Main");
+                      $("#DiscardToMain").attr( 'title',"Cannot Send Discard To Main In Infinite Mode");
+                    }
+                    else{
+                      $("#DiscardToMain").attr( 'title',"Return Discards To Main");
+                    }
+
+                    if(data.empty == true){
+                      $("#Shuffle").val("Main Empty");
+                      $("#Shuffle").attr("disabled", true);
+                    }
+                    else if(data.empty == false){
+                      $("#Shuffle").val("Shuffle Main");
+                      $("#Shuffle").removeAttr("disabled");
+                    }
+
+                    document.getElementById("openGame").textContent = "Open On /player";
+                }
+                else if(data.gameactive == false){
+                    $('#playernum').removeAttr("disabled");
+                    $('#hand').removeAttr("disabled");
+                    $('#Infinite').removeAttr("disabled");
+                    $("#Joker").removeAttr("disabled");
+                    $('#ShuffleOn').attr("disabled", !$("#Infinite").prop("checked"));
+                    if($("#ShuffleOn").is(":disabled")){
+                        $("#ShuffleOn").prop('checked', false);
+                    }
+                    $("#DiscardToMain").attr("disabled", true);
+                    $("#DiscardToMain").val("Discard To Main");
+                    $("#Shuffle").attr("disabled", true);
+
+                    document.getElementById("openGame").textContent = "";
+
+                    $("#hand").attr( 'max',data.maxhand);
+                    if($("#hand").val() > data.maxhand){
+                        $("#hand").val(data.maxhand)
+                    }
+                    $("#GameButton").val("Create Game");
+                    $("#GameButton").attr( 'title',"Start New Game - This Will Clear Any Previous Game History");
+                    $("#GameButton").attr( 'onClick',"SetGame()");
+                }
+            }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+            $(document).ready(function(){
+                //$("#GameButton").click(SetGame);
+                $("#updateButton").click(UpdateGame);
+                //$("#end").click(EndGame);
+                $.get("/start",function(data){
+                    if(!data)
+                        return;
+                    $("#playernum").val(data.playernum);
+                    $("#hand").val(data.handnum);
+                    $("#name").val(data.gamename);
+                    $("#Infinite").prop('checked', data.infinite);
+                    $("#ShuffleOn").prop('checked', data.shuffleon);
+                    $("#Joker").prop('checked', data.joker);
+                });
+            });
+        </script>
+    </body>
+</html>
