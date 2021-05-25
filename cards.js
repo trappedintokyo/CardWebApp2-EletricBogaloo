@@ -13,15 +13,15 @@ module.exports = class Deck {
         const values = ['Ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King'];
         const images = [
          /// aces
-          "/views/PNG/AH.png", //aceHearts
-          "/views/PNG/AS.png", //aceSpades
-          "/views/PNG/AC.png", //aceClubs
-          "/views/PNG/AD.png", //aceDiamonds
+          "/views/PNG/AH.png",
+          "/views/PNG/AS.png",
+          "/views/PNG/AC.png",
+          "/views/PNG/AD.png",
           ///2s
-          "/views/PNG/2H.png", //twoHearts
-          "/views/PNG/2S.png", //twoSpades
-          "/views/PNG/2C.png", //twoclub
-          "/views/PNG/2D.png", //twoDiamonds
+          "/views/PNG/2H.png",
+          "/views/PNG/2S.png",
+          "/views/PNG/2C.png",
+          "/views/PNG/2D.png",
           ///3s
           "/views/PNG/3H.png",
           "/views/PNG/3S.png",
